@@ -61,22 +61,24 @@ def equetions(t, p):
 initial_states = data.get_initial_states()
 # print(initial_states)  # отладка
 
-"""
+
 # 0 - начальное время
-# 10 - 
-sol = RK45(equetions, 0, initial_states, 10)
-print(sol.n)
-print(sol.t)
-print(sol.y)
-print(sol.f)
-print(sol.direction)
+# 15 - конечное время
+for i in range(5):
+    sol = RK45(equetions, t0=t, y0=initial_states, t_bound=15)
+    initial_states = sol.f
+    # print(sol.n)
+    print(sol.t)
+    print(sol.y)
+    print(sol.f)
+    # print(sol.direction)
+
 """
-
-sol = solve_ivp(equetions, [0, 15], initial_states)  # t_eval=np.linspace(0, 15, 16)
-# print(sol.t.reshape(-1,1))
-# print(sol.y[0])
+sol = solve_ivp(equetions, [0, 15], initial_states, t_eval=np.linspace(0, 15, 16))  # t_eval=np.linspace(0, 15, 16)
+print(sol.t.reshape(-1,1))
+print(sol.y[0])
 print(sol.status)
-
+"""
 """
 sol = solve_ivp(lambda t, y: t-y, [0, 15], [2, 3],
                 t_eval=np.linspace(0, 15, 16))
