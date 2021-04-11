@@ -13,7 +13,7 @@ class Tree:
             for line in file:
                 n1 = line.find('=')
                 tmp_data.append(line[n1 + 2:-1:])
-            N, k, n, t, m, q, Q = tmp_data
+            N, k, n, t, m, q, Q, tree = tmp_data
             # для отладки
             # print(N, k, n, t, m, q, Q)
         self.__N = int(N)      # эталонный размер популяции
@@ -25,11 +25,15 @@ class Tree:
         self.__migration_probability.resize(int(k), int(k))
         self.__coalescence_probability = np.array(list(map(float, q.split(' '))))
         self.__Q = float(Q)
+        self.__tree_newick = tree  # норм, что строка?
+
+        self.__cur_samples_amount = self.__samples_amount
 
     def show(self):
         print(self.__number_of_populations, self.__T, '\n')
         print(self.__number_of_samples, self.__samples_amount, '\n')
         print(self.__migration_probability, '\n\n', self.__coalescence_probability, '\n')
+        print(self.__tree_newick, '\n')
 
     @property
     def original_size(self):
@@ -63,11 +67,27 @@ class Tree:
     def Q(self):
         return self.__Q
 
+    @property
+    def tree_newick(self):
+        return self.__tree_newick
+
+    @property
+    def cur_samples_amount(self):
+        return self.__cur_samples_amount
+
+    @cur_samples_amount.setter
+    def cur_samples_amount(self, cur_samples_amount):
+        if cur_samples_amount >= 1:
+            self.__cur_samples_amount = cur_samples_amount
+        else:
+            raise ValueError("the minimum number of samples has been reached")
+
     def get_initial_states(self):
         """
         :return result: 1-D array of initial states
         """
         result = []
+        # вспомогательная переменная для проверки принадлежности текущего образца к текущей популяции
         current_samples_sum = 0
         # по каждой популяции
         for i in range(self.__number_of_populations):
@@ -80,22 +100,3 @@ class Tree:
                     result.append(0)
             current_samples_sum += self.__number_of_samples[i]
         return result
-    """
-    def get_initial_states_2D(self):
-        ""
-        :returns result: 1-D array of initial states
-        ""
-        result = []
-        current_samples_sum = 0
-        # по каждой популяции
-        for i in range(self.__number_of_populations):
-            # по каждому образцу
-            for j in range(self.__samples_amount):
-                # если образец в начальный момент принадлежит этой популяции
-                if(current_samples_sum <= j < current_samples_sum + self.__number_of_samples[i]):
-                    result.append(1)
-                else:
-                    result.append(0)
-            current_samples_sum += self.__number_of_samples[i]
-        return result
-        """
