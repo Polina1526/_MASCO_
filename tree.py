@@ -20,13 +20,13 @@ class Tree:
         N, k, n, t, q, Q = fun.read_coef(coef_file)
         self.__N = int(N[0])      # эталонный размер популяции
         self.__number_of_populations = int(k[0])  # количество популяций (m)
-        self.__number_of_samples = np.array(n)  # (список) колличество образцов в каждой популяции
+        self.__number_of_samples = np.array(n, dtype=int)  # (список) колличество образцов в каждой популяции
         self.__samples_amount = int(np.sum(self.__number_of_samples))  # всего образцов (n)
         self.__T = int(t[0])      # время слияния всех популяций
-        self.__migration_probability = np.array(fun.read_migration(migr_file))  # матрица с коэфициентами миграции
-        self.__coalescence_probability = np.array(q)  # вектор с коэффициентами коалесценции
+        self.__migration_probability = np.array(fun.read_migration(migr_file), ndmin=2)  # матрица с коэфициентами миграции
+        self.__coalescence_probability = np.array(q, dtype=float)  # вектор с коэффициентами коалесценции
         self.__Q = float(Q[0])
-        self.__tree_newick = fun.read_tree_Newick(tree_file)  # дерево в формате Newick норм, что строка?
+        self.__tree_newick = str(fun.read_tree_Newick(tree_file))  # дерево в формате Newick, норм, что строка?
 
         self.__cur_samples_amount = self.__samples_amount
 

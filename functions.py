@@ -3,6 +3,10 @@ import numpy as np
 
 
 def read_coef(file_name):
+    """
+    :param file_name:
+    :return: list of lists of coefficients in a certain order
+    """
     with open(file_name) as f:
         line = next(f).rstrip()  # header with version etc
         line = line.split(" ")
@@ -17,6 +21,10 @@ def read_coef(file_name):
 
 
 def read_migration(file_name):
+    """
+    :param file_name:
+    :return: migration rates matrix (in format: list of lists)
+    """
     with open(file_name) as f:
         line = next(f).rstrip()  # header with version etc
         line = line.split(" ")
@@ -29,10 +37,14 @@ def read_migration(file_name):
             migration_rates.append([float(value) for value in line])
         for i in range(len(migration_rates)):
             migration_rates[i][i] = 0.0
-        return migration_rates
+        return(migration_rates)
 
 
 def read_tree_Newick(file_name):
+    """
+    :param file_name:
+    :return: string with tree in Newick format
+    """
     with open(file_name) as f:
         line = next(f).rstrip()  # header with version etc
         line = line.split(" ")
