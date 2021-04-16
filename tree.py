@@ -1,31 +1,32 @@
 import numpy as np
+import functions as fun
+#from functions import read_coef, read_migration, read_tree_Newick
 from scipy import special   # для биномиальных коэффициентов
 import struct
 
 
 class Tree:
-
-    def __init__(self, file_name: str):
+    def __init__(self, coef_file: str, migr_file: str, tree_file: str):
         # Извлечение данных из файла и создание объекта
         # Данные в файле должны быть в таком порядке: N, k, n, t, m, q, Q
-        with open(file_name, 'r', encoding='utf8') as file:
+        """with open(file_name, 'r', encoding='utf8') as file:
             tmp_data = []
             for line in file:
                 n1 = line.find('=')
                 tmp_data.append(line[n1 + 2:-1:])
             N, k, n, t, m, q, Q, tree = tmp_data
             # для отладки
-            # print(N, k, n, t, m, q, Q)
-        self.__N = int(N)      # эталонный размер популяции
-        self.__number_of_populations = int(k)  # количество популяций (m)
-        self.__number_of_samples = np.array(list(map(int, n.split(' '))))
-        self.__samples_amount = np.sum(self.__number_of_samples)  #всего образцов дано (n)
-        self.__T = int(t)      # время слияния всех популяций
-        self.__migration_probability = np.array(list(map(float, m.split(' '))))
-        self.__migration_probability.resize(int(k), int(k))
-        self.__coalescence_probability = np.array(list(map(float, q.split(' '))))
-        self.__Q = float(Q)
-        self.__tree_newick = tree  # норм, что строка?
+            # print(N, k, n, t, m, q, Q)"""
+        N, k, n, t, q, Q = fun.read_coef(coef_file)
+        self.__N = int(N[0])      # эталонный размер популяции
+        self.__number_of_populations = int(k[0])  # количество популяций (m)
+        self.__number_of_samples = np.array(n)  # (список) колличество образцов в каждой популяции
+        self.__samples_amount = int(np.sum(self.__number_of_samples))  # всего образцов (n)
+        self.__T = int(t[0])      # время слияния всех популяций
+        self.__migration_probability = np.array(fun.read_migration(migr_file))  # матрица с коэфициентами миграции
+        self.__coalescence_probability = np.array(q)  # вектор с коэффициентами коалесценции
+        self.__Q = float(Q[0])
+        self.__tree_newick = fun.read_tree_Newick(tree_file)  # дерево в формате Newick норм, что строка?
 
         self.__cur_samples_amount = self.__samples_amount
 

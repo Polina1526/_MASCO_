@@ -1,3 +1,4 @@
+import functions as fun
 import numpy as np
 from tree import Tree
 import random
@@ -7,136 +8,72 @@ from struct import pack, unpack
 from sys import getsizeof
 from scipy.integrate import solve_ivp
 
-tree = Tree('data')
+tree = Tree("coefficients", "migration_rates", "Newick_tree")
 # отладка
 # tree.show()
 
-
-def equations(p: np.ndarray, data: Tree, period: int) -> np.ndarray:
-    """
-    :param p: p = P(L_i = l_i | T), (y в обозначениях из примеров)
-    :param data:
-    :return: result: 1-D array (length = m * n)
-    """
-    result = []
-    value_of_cur_fun = 0
-    # по каждой популяции
-    for pop in range(data.number_of_populations):
-        # по всем образцам
-        for i in range(data.samples_amount):
-            # *** обращение к нужному p через индекс ( pop * data.samples_amount + i )
-            ################################################
-            # первое(1-я часть семмы) слагаемое
-            for a in range(data.number_of_populations):
-                value_of_cur_fun += data.migration_probability[a][pop] * p[a * data.samples_amount + i]
-            ################################################
-            # первое(2-я часть суммы) слагаемое
-            for a in range(data.number_of_populations):
-                value_of_cur_fun -= data.migration_probability[pop][a] * p[pop * data.samples_amount + i]
-            ################################################
-            # второе слагаемое
-            first_multiplier = 0
-            second_multiplier = 0
-            sum_of_mult = 0
-            for a in range(data.number_of_populations):
-                first_multiplier = data.coalescence_probability[a] * p[a * data.samples_amount + i]
-                second_multiplier = 0
-                for k in range(data.samples_amount):
-                    if k != i:
-                        second_multiplier += p[a * data.samples_amount + k]
-                sum_of_mult += first_multiplier * second_multiplier
-            value_of_cur_fun += p[pop * data.samples_amount + i] * sum_of_mult
-            ################################################
-            # третье слагаемое
-            tmp_sum = 0
-            for k in range(data.samples_amount):
-                if k != i:
-                    tmp_sum += p[pop * data.samples_amount + k]
-            value_of_cur_fun -= p[pop * data.samples_amount + i] * data.coalescence_probability[pop] * tmp_sum
-            ################################################
-            result.append(value_of_cur_fun)
-            value_of_cur_fun = 0
-
-    return result
+##############################################
+# надо понять как это получать это из дерева #
+##############################################
+# Вариант 1, пример с рисунка из статьи
+# limits_list = [np.array([0, 10]), np.array([10, 25])]
+# lineage_list = [np.array([0, 1]), np.array([0, 1])]
+# Вариант 2, пример из головы :)
+limits_list = [np.array([0, 10]), np.array([10, 25]), np.array([25, 40])]
+lineage_list = [np.array([1, 2]), np.array([0, 2]), np.array([0, 1])]
 
 
-"""
-# по каждой популяции, и по всем образцам для каждой популяции
-initial_states = tree.get_initial_states()
-# отладка
-# print(initial_states)
-"""
-
-
-def create_initial(data: Tree, period: int, previous_states: np.ndarray = None, lineage: np.ndarray = None) -> np.ndarray:
-    """
-    :param data:
-    :param period:
-    :param previous_states: probabilities before coalescence
-    :param lineage: contains two samples that participated in coalescence
-    :return: result: vector of initial states for current "period"
-    """
-    # *** обращение к нужному p через индекс ( pop * data.samples_amount + i )
-    if period == 0:
-        return data.get_initial_states()
-    else:
-        lineage = np.sort(lineage)
-        result = []
-        # cur_samples_sum = 0  ??нужно??
-
-        # посчитаю все условные вероятности для lineage[0] и всех pop
-        conditional_prob = []
-        for pop in range(data.number_of_populations):
-            conditional_prob.append(previous_states[pop * data.samples_amount + lineage[0]] *
-                                    previous_states[pop * data.samples_amount + lineage[1]] *
-                                    data.coalescence_probability[pop])
-        sum_conditional_prob = np.sum(conditional_prob)  # ??? нужно ли переводить в массив ???
-        # по каждой популяции
-        for pop in range(data.number_of_populations):
-            # по каждому образцу
-            for i in range(data.samples_amount):
-                # если образец участвовал в коалесценции и у него меньшее 'id', то есть он остался
-                if i == lineage[0]:
-                    # !!!!!!!!!!!!!! можно использовать уже посчитанные выше
-                    result.append(previous_states[pop * data.samples_amount + i] *
-                                  previous_states[pop * data.samples_amount + lineage[1]] *
-                                  data.coalescence_probability[pop])
-                # если образец участвовал в коалесценции и у него большее 'id', то есть он не остался
-                elif i == lineage[1]:
-                    continue
-                # если образец не участвовал в коалесценции
-                elif i != lineage[0] and i != lineage[1]:
-                    result.append(previous_states[pop * data.samples_amount + i] * sum_conditional_prob)
-
-            # cur_samples_sum += tree.number_of_samples[pop]  ??нужно??
-        return result
-
-
-def get_limits(period: int) -> np.ndarray:
-    return
-
-
-##########################################
-# надо понять как это получать из дерева
-limits_list = [np.array([0, 10]), np.array([10, 25])]
-lineage_list = [np.ndarray([0, 1]), np.ndarray([0, 1])]
 previous_states = None
-
-sol_list = []
+sol_lines_list = []
+sol_tree_list = []
 for period in range(tree.samples_amount - 1):
-
-    lineage = lineage_list[period]  # ...
-    initial_states = create_initial(tree, period, previous_states=previous_states, lineage=lineage)  # ...
-
+    #########################################
+    #                 ЛИНИИ                 #
+    #########################################
+    # тут находятся индексы образцов, принимающих участие в коалесценции в каждом периоде
+    # при этом после кажой коалесценции инлексы после j-ого уменьшаются на один
+    lineage = lineage_list[period]
     limits = limits_list[period]  # ...
-    t_span = np.linspace(limits[0], limits[1], limits[1] - limits[0] + 1)
-    sol_list.append(solve_ivp(lambda t, y: equations(y, tree, period), t_span=limits, y0=initial_states, t_eval=t_span))
-
-    # уменьшается cur_samples_amount, так как следующий период после коалесцении
-    tree.cur_samples_amount -= 1
     # последний столбец решений
-    previous_states = sol_list[-1].y[:, -1]
+    if period != 0:
+        previous_states = sol_lines_list[-1].y[:, -1]
+    initial_states = fun.create_initial(tree, period, previous_states=previous_states, lineage=lineage)  # ...
+
+    # нужно ли находить значения функции только в точках с целым dt или в этом необходимости нет?
+    t_span = np.linspace(limits[0], limits[1], limits[1] - limits[0] + 1)
+
+    # решение диффуров для вероятностей линий на данном периоде
+    sol_lines_list.append(solve_ivp(lambda t, y: fun.system_of_DE_for_lines(tree, y),
+                                    t_span=limits,
+                                    y0=initial_states,
+                                    t_eval=t_span))
+
+    ##########################################
+    #                 ДЕРЕВО                 #
+    ##########################################
+    if period == 0:
+        p_tree_before = None
+    else:
+        p_tree_before = sol_tree_list[-1].y[0][-1]
+    tree_initial_state = fun.create_init_state_for_tree(tree, period,
+                                                    p_tree_before=p_tree_before,
+                                                    lines_prob=sol_lines_list[-1].y[:, -1],
+                                                    lineage=lineage)
+
+    # решение диффуров для вероятностей линий на данном периоде
+    sol_tree_list.append(solve_ivp(lambda t, y: fun.DE_for_tree(tree, y, sol_lines_list[-1].y, t, limits[0]),
+                                   t_span=limits,
+                                   y0=tree_initial_state,
+                                   t_eval=t_span))
+
+    # уменьшается cur_samples_amount для следующего периода после коалесцении
+    tree.cur_samples_amount -= 1
 
 
-for sol in sol_list:
-    print(sol)
+# for sol in sol_lines_list:
+#     print(sol.y)
+
+# for sol in sol_tree_list:
+#     print(sol.y)
+
+print(sol_tree_list[-1].y[0][-1])
