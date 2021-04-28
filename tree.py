@@ -8,37 +8,22 @@ import struct
 class Tree:
     def __init__(self, coef_file: str, migr_file: str, tree_file: str):
         # Извлечение данных из файла и создание объекта
-        # Данные в файле должны быть в таком порядке: N, k, n, t, m, q, Q
-        """with open(file_name, 'r', encoding='utf8') as file:
-            tmp_data = []
-            for line in file:
-                n1 = line.find('=')
-                tmp_data.append(line[n1 + 2:-1:])
-            N, k, n, t, m, q, Q, tree = tmp_data
-            # для отладки
-            # print(N, k, n, t, m, q, Q)"""
-        N, k, n, t, q, Q = fun.read_coef(coef_file)
-        self.__N = int(N[0])      # эталонный размер популяции
-        self.__number_of_populations = int(k[0])  # количество популяций (m)
+        # Данные в файле должны быть в таком порядке:  m, n, q
+        m, n, q = fun.read_coef(coef_file)
+        self.__number_of_populations = int(m[0])  # количество популяций (m)
         self.__number_of_samples = np.array(n, dtype=int)  # (список) колличество образцов в каждой популяции
         self.__samples_amount = int(np.sum(self.__number_of_samples))  # всего образцов (n)
-        self.__T = int(t[0])      # время слияния всех популяций
         self.__migration_probability = np.array(fun.read_migration(migr_file), ndmin=2)  # матрица с коэфициентами миграции
         self.__coalescence_probability = np.array(q, dtype=float)  # вектор с коэффициентами коалесценции
-        self.__Q = float(Q[0])
         self.__tree_newick = str(fun.read_tree_Newick(tree_file))  # дерево в формате Newick, норм, что строка?
 
         self.__cur_samples_amount = self.__samples_amount
 
     def show(self):
-        print(self.__number_of_populations, self.__T, '\n')
+        print(self.__number_of_populations, '\n')
         print(self.__number_of_samples, self.__samples_amount, '\n')
         print(self.__migration_probability, '\n\n', self.__coalescence_probability, '\n')
         print(self.__tree_newick, '\n')
-
-    @property
-    def original_size(self):
-        return self.__N
 
     @property
     def number_of_populations(self):
@@ -53,20 +38,12 @@ class Tree:
         return self.__samples_amount
 
     @property
-    def T(self):
-        return self.__T
-
-    @property
     def migration_probability(self):
         return self.__migration_probability
 
     @property
     def coalescence_probability(self):
         return self.__coalescence_probability
-
-    @property
-    def Q(self):
-        return self.__Q
 
     @property
     def tree_newick(self):

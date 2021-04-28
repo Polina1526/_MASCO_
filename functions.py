@@ -48,7 +48,6 @@ def read_tree_Newick(file_name):
     with open(file_name) as f:
         line = next(f).rstrip()  # header with version etc
         line = line.split(" ")
-        tree = []
         for line in f:
             if line[0] == "#":
                 continue
@@ -58,55 +57,6 @@ def read_tree_Newick(file_name):
 def system_of_DE_for_lines(data: Tree, p: np.ndarray) -> np.ndarray:
     """
     :param data:
-    :param p: p means P(L_i = l_i | T)
-    :return: (result) derivative of probability function for each line in any population,
-             1-D array with length = m * n
-    """
-    result = []
-    value_of_cur_fun = 0
-    # по каждой популяции
-    for pop in range(data.number_of_populations):
-        # по всем образцам
-        for i in range(data.cur_samples_amount):
-            # *** обращение к нужному p через индекс ( pop * data.cur_samples_amount + i )
-            ################################################
-            # первое(1-я часть семмы) слагаемое
-            for a in range(data.number_of_populations):
-                value_of_cur_fun += data.migration_probability[a][pop] * p[a * data.cur_samples_amount + i]
-            ################################################
-            # первое(2-я часть суммы) слагаемое
-            for a in range(data.number_of_populations):
-                value_of_cur_fun -= data.migration_probability[pop][a] * p[pop * data.cur_samples_amount + i]
-            ################################################
-            # второе слагаемое
-            first_multiplier = 0
-            second_multiplier = 0
-            sum_of_mult = 0
-            for a in range(data.number_of_populations):
-                first_multiplier = data.coalescence_probability[a] * p[a * data.cur_samples_amount + i]
-                second_multiplier = 0
-                for k in range(data.cur_samples_amount):
-                    if k != i:
-                        second_multiplier += p[a * data.cur_samples_amount + k]
-                sum_of_mult += first_multiplier * second_multiplier
-            value_of_cur_fun += p[pop * data.cur_samples_amount + i] * sum_of_mult
-            ################################################
-            # третье слагаемое
-            tmp_sum = 0
-            for k in range(data.cur_samples_amount):
-                if k != i:
-                    tmp_sum += p[pop * data.cur_samples_amount + k]
-            value_of_cur_fun -= p[pop * data.cur_samples_amount + i] * data.coalescence_probability[pop] * tmp_sum
-            ################################################
-            result.append(value_of_cur_fun)
-            value_of_cur_fun = 0
-
-    return result
-
-
-def system_of_DE_for_lines(data: Tree, p: np.ndarray) -> np.ndarray:
-    """
-    :param data: 
     :param p: p means P(L_i = l_i | T)
     :return: (result) derivative of probability function for each line in any population,
              1-D array with length = m * n
