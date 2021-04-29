@@ -3,8 +3,8 @@ import numpy as np
 from tree import Tree
 from scipy.integrate import solve_ivp
 
-tree = Tree("coefficients", "migration_rates", "Newick_tree")
 
+tree = Tree("coefficients", "migration_rates", "Newick_tree")
 limits_list, lineage_list = fun.parse_tree_history(data=tree)
 
 previous_states = None
