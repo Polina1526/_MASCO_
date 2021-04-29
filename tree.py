@@ -1,8 +1,5 @@
 import numpy as np
 import functions as fun
-#from functions import read_coef, read_migration, read_tree_Newick
-from scipy import special   # для биномиальных коэффициентов
-import struct
 
 
 class Tree:
@@ -13,9 +10,9 @@ class Tree:
         self.__number_of_populations = int(m[0])  # количество популяций (m)
         self.__number_of_samples = np.array(n, dtype=int)  # (список) колличество образцов в каждой популяции
         self.__samples_amount = int(np.sum(self.__number_of_samples))  # всего образцов (n)
-        self.__migration_probability = np.array(fun.read_migration(migr_file), ndmin=2)  # матрица с коэфициентами миграции
+        self.__migration_probability = np.array(fun.read_migration(migr_file), ndmin=2)  # матрица с коэф-тами миграции
         self.__coalescence_probability = np.array(q, dtype=float)  # вектор с коэффициентами коалесценции
-        self.__tree_newick = str(fun.read_tree_Newick(tree_file))  # дерево в формате Newick, норм, что строка?
+        self.__tree_Newick = str(fun.read_tree_Newick(tree_file))  # дерево в формате Newick
 
         self.__cur_samples_amount = self.__samples_amount
 
@@ -23,7 +20,7 @@ class Tree:
         print(self.__number_of_populations, '\n')
         print(self.__number_of_samples, self.__samples_amount, '\n')
         print(self.__migration_probability, '\n\n', self.__coalescence_probability, '\n')
-        print(self.__tree_newick, '\n')
+        print(self.__tree_Newick, '\n')
 
     @property
     def number_of_populations(self):
@@ -46,8 +43,8 @@ class Tree:
         return self.__coalescence_probability
 
     @property
-    def tree_newick(self):
-        return self.__tree_newick
+    def tree_Newick(self):
+        return self.__tree_Newick
 
     @property
     def cur_samples_amount(self):
